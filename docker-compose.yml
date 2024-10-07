@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: "redis"
+    ports:
+      - 6379:6379
+  
+  web:
+    env_file:
+      - .env
+    restart: unless-stopped
+    build: .
+    command: sh -c 'cd cat_chat &&
+                python manage.py makemigrations &&
+                python manage.py migrate &&
+                python manage.py collectstatic --noinput &&
+                daphne cat_chat.asgi:application --bind 0.0.0.0'
+    volumes:
+      - static_volume:/app/cat_chat/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    container_name: cat_chat-db
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - .data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    volumes:
+      - static_volume:/app/cat_chat/staticfiles
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+
+    ports:
+      - 8000:8000
+    depends_on:
+      - web
+
+volumes:
+  static_volume:

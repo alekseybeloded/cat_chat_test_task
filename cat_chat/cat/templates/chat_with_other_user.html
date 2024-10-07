@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат с {{ other_user.username }}</title>
+    <link href="{% static 'cat/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'cat/css/styles.css' %}" rel="stylesheet">
+    <style>
+        #chat-log {
+            border: 1px solid #ced4da; /* Цвет рамки */
+            border-radius: 0.5rem; /* Закругление углов */
+            padding: 1rem; /* Внутренние отступы */
+            height: 400px; /* Высота области чата */
+            overflow-y: scroll; /* Прокрутка по вертикали */
+            background-color: #f8f9fa; /* Цвет фона */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Тень */
+        }
+
+        /* Убираем цветную рамку при фокусировке */
+        #chat-message-input:focus {
+            outline: none; /* Убираем обводку */
+            box-shadow: none; /* Убираем тень */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Чат с {{ other_user.username }}</h1>
+        <div id="chat-log"></div>
+        <div class="input-group mb-3">
+            <input id="chat-message-input" type="text" class="form-control" placeholder="Введите ваше сообщение..." aria-label="Введите ваше сообщение..." required>
+            <button id="chat-message-submit" class="btn btn-primary" type="button">Отправить</button>
+        </div>
+    </div>
+
+    <script>
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/' + {{ other_user.id }} + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').innerHTML += (data.message + '<br>');
+            const chatLog = document.querySelector('#chat-log');
+            chatLog.scrollTop = chatLog.scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+</body>
+</html>
+
