@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Удалить кота</title>
+    <link href="{% static 'cat/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'cat/css/styles.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h3>Удалить кота: {{ cat.name }}</h3>
+        <p>Вы уверены, что хотите удалить этого кота?</p>
+        <form method="POST" class="mb-3">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+        </form>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
+    </div>
+    <script src="{% static 'cat/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
